@@ -2,6 +2,14 @@
 
 A full-stack web application that lets patients book appointments with their healthcare providers through an AI-powered chat interface.
 
+## Features (Planned)
+
+- AI chat interface for natural-language appointment booking
+- Patient and provider authentication (JWT)
+- Provider availability management
+- Appointment history and upcoming visit dashboard
+- Real-time chat with streaming responses
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -11,14 +19,6 @@ A full-stack web application that lets patients book appointments with their hea
 | Database | PostgreSQL, SQLAlchemy, Alembic |
 | AI | Claude API |
 | Deployment | Render (backend), Vercel (frontend) |
-
-## Features (Planned)
-
-- AI chat interface for natural-language appointment booking
-- Patient and provider authentication (JWT)
-- Provider availability management
-- Appointment history and upcoming visit dashboard
-- Real-time chat with streaming responses
 
 ## Project Structure
 
@@ -35,14 +35,6 @@ Patient-Apt-Scheduler/
 │   └── public/
 └── README.md
 ```
-
-## Roadmap
-
-- [x] Phase 1 — Project foundation & repo setup
-- [ ] Phase 2 — Core data models & authentication
-- [ ] Phase 3 — AI chatbot integration
-- [ ] Phase 4 — Frontend UI
-- [ ] Phase 5 — Polish & deployment
 
 ## Getting Started
 
@@ -62,14 +54,4 @@ uvicorn app.main:app --reload
 cd frontend
 npm install
 npm run dev
-```
-
-## Environment Variables
-
-Create a `.env` file in `/backend`:
-
-```
-DATABASE_URL=
-SECRET_KEY=
-AI_API_KEY=
 ```
