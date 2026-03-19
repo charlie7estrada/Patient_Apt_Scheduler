@@ -19,7 +19,7 @@ function Register() {
     e.preventDefault()
     setError('')
 
-    const response = await fetch('http://127.0.0.1:8001/api/v1/auth/register', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)

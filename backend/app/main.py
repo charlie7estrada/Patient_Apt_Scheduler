@@ -1,12 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import auth, chat
+import os
 
 app = FastAPI(title="Patient Appointment Scheduler API")
 
+origins = [
+    "http://localhost:5173",
+    os.getenv("FRONTEND_URL", ""),
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
