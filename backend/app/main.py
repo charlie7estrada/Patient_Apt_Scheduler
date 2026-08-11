@@ -1,9 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from app.routes import auth, chat
+from app.services.seed import seed_demo_provider
 import os
 
-app = FastAPI(title="Patient Appointment Scheduler API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    seed_demo_provider()
+    yield
+
+app = FastAPI(title="Patient Appointment Scheduler API", lifespan=lifespan)
 
 origins = [
     "http://localhost:5173",
