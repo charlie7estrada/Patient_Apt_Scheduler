@@ -1,23 +1,31 @@
 # Patient Appointment Scheduler
 
-A full-stack web application that lets patients book appointments with their healthcare providers through an AI-powered chat interface.
+A full-stack web application that lets patients book appointments with their healthcare providers through an AI-powered chat interface. Instead of filling out a booking form, the patient just talks to the assistant — it collects the date, time, and reason for the visit, then calls a backend tool to actually create the appointment.
 
-## Features (Planned)
+**Live demo:** https://patient-apt-scheduler.vercel.app
+**API:** https://patient-apt-scheduler-api.onrender.com
+> Note: the backend is hosted on Render's free tier, which spins down after inactivity. The first request after idle time can take 30–50 seconds to wake up — if the demo seems stuck on first load, give it a moment.
 
-- AI chat interface for natural-language appointment booking
-- Patient and provider authentication (JWT)
-- Provider availability management
-- Appointment history and upcoming visit dashboard
-- Real-time chat with streaming responses
+
+## Features
+- AI chat interface for natural-language appointment booking, backed by real tool-calling (not just conversation)
+- JWT-based patient authentication (register/login)
+- Upcoming appointments dashboard, scoped per patient
+- Deployed end-to-end: FastAPI on Render, React on Vercel, Postgres on Neon
+
+### Not yet built
+- Provider-side dashboard (accepting/managing appointments — currently a single seeded demo provider handles all bookings)
+- Appointment cancellation/rescheduling
+- Streaming chat responses
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Backend | Python, FastAPI |
-| Frontend | JavaScript, React, Vite |
-| Database | PostgreSQL, SQLAlchemy, Alembic |
-| AI | Claude API |
+| Frontend | JavaScript, React, Vite, Tailwind CSS |
+| Database | PostgreSQL (Neon), SQLAlchemy, Alembic |
+| AI | Mistral API |
 | Deployment | Render (backend), Vercel (frontend) |
 
 ## Project Structure
