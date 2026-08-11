@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { apiFetch } from '../lib/api'
 
 function Dashboard() {
   const [messages, setMessages] = useState([
@@ -29,12 +30,13 @@ function Dashboard() {
       content: m.content
     }))
 
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/chat/`, {
+    const response = await apiFetch('/api/v1/chat/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: input, history })
     })
 
+    if (!response) return
+    
     const data = await response.json()
     setMessages([...updatedMessages, { role: 'assistant', content: data.response }])
     setLoading(false)
