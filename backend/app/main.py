@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.routes import auth, chat
+from app.routes import auth, chat, appointments
 from app.services.seed import seed_demo_provider
 import os
 
@@ -27,6 +27,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
+app.include_router(appointments.router, prefix="/api/v1")
 
 @app.get("/health")
 def health_check():
