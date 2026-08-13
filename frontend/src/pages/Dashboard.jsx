@@ -93,7 +93,11 @@ function Dashboard() {
               {appointments.map(a => (
                 <li key={a.id} className="border border-slate-100 bg-slate-50/50 rounded-xl p-3">
                   <p className="text-sm font-medium text-slate-800">
-                    {new Date(a.scheduled_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                    {new Date(a.scheduled_at).toLocaleString([], { 
+                      dateStyle: 'medium', 
+                      timeStyle: 'short', 
+                      timeZone: 'America/Chicago',
+                      })} CT
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5">{a.reason}</p>
                   <p className="text-xs text-slate-500">with {a.provider_name}</p>

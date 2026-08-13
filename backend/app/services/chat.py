@@ -1,6 +1,7 @@
 from mistralai import Mistral
 from dotenv import load_dotenv
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 import json
 import os
@@ -12,9 +13,16 @@ load_dotenv()
 
 client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
 
-SYSTEM_PROMPT = """You are a helpful scheduling assistant for a medical office.
+CLINIC_TZ = ZoneInfo("America/Chicago")
+
+def build_system_prompt() -> str:
+    today = datetime.now(CLINIC_TZ)
+    return f"""You are a helpful scheduling assistant for a medical office.
+Today's date is {today.strftime('%Y-%m-%d')} ({today.strftime('%A')}).
 Your job is to help patients book appointments with their healthcare provider.
-Collect the patient's preferred date, time, reason for visit.
+You can book appointments directly using the create_appointment tool — never tell the patient you're unable to schedule appointments.
+Collect the patient's preferred date, time, reason for visit. If any of these are missing, ask the patient for just the missing pieces.
+When the patient says something relative like "today", "tomorrow", or "this week", resolve it to an actual date yourself before calling the tool.
 Once you have all three details, call the create_appointment tool to book it.
 After the tool returns, confirm the booking to the patient in a short, friendly message.
 Keep responses short, friendly, and professional."""
@@ -47,7 +55,7 @@ CREATE_APPOINTMENT_TOOL = {
 
 def _execute_create_appointment(args: dict, patient: User, db: Session) -> dict:
     provider = db.query(User).filter(User.email == DEMO_PROVIDER_EMAIL).first()
-    scheduled_at = datetime.strptime(f"{args['date']} {args['time']}", "%Y-%m-%d %H:%M")
+    scheduled_at = datetime.strptime(f"{args['date']} {args['time']}", "%Y-%m-%d %H:%M").replace(tzinfo=CLINIC_TZ)
 
     appointment = Appointment(
         patient_id=patient.id,
@@ -67,7 +75,7 @@ def _execute_create_appointment(args: dict, patient: User, db: Session) -> dict:
     }
 
 def get_chat_response(message: str, history: list, patient: User, db: Session) -> str:
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages = [{"role": "system", "content": build_system_prompt()}]
     messages.extend(history)
     messages.append({"role": "user", "content": message})
 

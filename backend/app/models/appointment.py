@@ -15,7 +15,7 @@ class Appointment(Base):
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     provider_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    scheduled_at = Column(DateTime, nullable=False)
+    scheduled_at = Column(DateTime(timezone=True), nullable=False)
     reason = Column(String, nullable=True)
     status = Column(Enum(AppointmentStatus), default=AppointmentStatus.pending)
 
