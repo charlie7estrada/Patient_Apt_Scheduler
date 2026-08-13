@@ -9,6 +9,7 @@ function Register() {
     role: 'patient'
   })
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   function handleChange(e) {
@@ -18,21 +19,28 @@ function Register() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    })
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
 
-    const data = await response.json()
+      const data = await response.json()
 
-    if (!response.ok) {
-      setError(data.detail || 'Registration failed')
-      return
+      if (!response.ok) {
+        setError(data.detail || 'Registration failed')
+        return
+      }
+
+      navigate('/login')
+    } catch {
+      setError('Could not reach the server. Please try again.')
+    } finally {
+      setLoading(false)
     }
-
-    navigate('/login')
   }
 
   return (
@@ -102,10 +110,22 @@ function Register() {
           </div>
           <button
             type="submit"
-            className="w-full bg-teal-600 text-white font-medium py-2.5 rounded-lg shadow-sm hover:bg-teal-700 transition"
+            disabled={loading}
+            className="w-full bg-teal-600 text-white font-medium py-2.5 rounded-lg shadow-sm hover:bg-teal-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            Create Account
+            {loading && (
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            )}
+            {loading ? 'Creating account…' : 'Create Account'}
           </button>
+          {loading && (
+            <p className="text-xs text-slate-400 mt-3 text-center">
+              This can take up to a minute if the server is waking up from idle.
+            </p>
+          )}
         </form>
 
         <p className="text-sm text-slate-500 mt-6 text-center">

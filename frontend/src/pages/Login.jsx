@@ -5,27 +5,35 @@ function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    })
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
 
-    const data = await response.json()
+      const data = await response.json()
 
-    if (!response.ok) {
-      setError(data.detail || 'Login failed')
-      return
+      if (!response.ok) {
+        setError(data.detail || 'Login failed')
+        return
+      }
+
+      localStorage.setItem('token', data.access_token)
+      navigate('/dashboard')
+    } catch {
+      setError('Could not reach the server. Please try again.')
+    } finally {
+      setLoading(false)
     }
-
-    localStorage.setItem('token', data.access_token)
-    navigate('/dashboard')
   }
 
   return (
@@ -70,10 +78,22 @@ function Login() {
           </div>
           <button
             type="submit"
-            className="w-full bg-teal-600 text-white font-medium py-2.5 rounded-lg shadow-sm hover:bg-teal-700 transition"
+            disabled={loading}
+            className="w-full bg-teal-600 text-white font-medium py-2.5 rounded-lg shadow-sm hover:bg-teal-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            Sign In
+            {loading && (
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            )}
+            {loading ? 'Signing in…' : 'Sign In'}
           </button>
+          {loading && (
+            <p className="text-xs text-slate-400 mt-3 text-center">
+              This can take up to a minute if the server is waking up from idle.
+            </p>
+          )}
         </form>
 
         <p className="text-sm text-slate-500 mt-6 text-center">
