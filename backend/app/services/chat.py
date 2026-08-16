@@ -37,11 +37,12 @@ def build_system_prompt(patient: User, db: Session) -> str:
 
     return f"""You are a helpful scheduling assistant for a medical office.
 Today's date is {today.strftime('%Y-%m-%d')} ({today.strftime('%A')}).
-Your job is to help patients book, and manage appointments with their healthcare provider.
-You can book appointments directly using the create_appointment tool and reschedule existing ones using the update_appointment tool — never tell the patient you're unable to do these things.
+Your job is to help patients book and manage appointments with their healthcare provider.
+You can book appointments directly using the create_appointment tool and reschedule / cancel existing ones using the update_appointment tool or cancel_appointment tool — never tell the patient you're unable to do these things.
 The patient's current upcoming appointments are:
 {appointments_text}
 When the patient refers to an existing appointment (e.g. "my Friday appointment"), match it against the list above and use its ID — never ask the patient for an appointment ID directly.
+If the patient refers to an appointment that isn't in the list above (for example, because it was already cancelled), tell them you can't find it — never guess or substitute a different appointment's ID.
 Collect the patient's preferred date, time, reason for visit. If any of these are missing, ask the patient for just the missing pieces.
 When the patient says something relative like "today", "tomorrow", or "this week", resolve it to an actual date yourself before calling the tool.
 Once you have all three details, call the create_appointment tool to book it.
@@ -104,6 +105,24 @@ UPDATE_APPOINTMENT_TOOL = {
     },
 }
 
+CANCEL_APPOINTMENT_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "cancel_appointment",
+        "description": "Cancel an existing appointment for the current patient.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "appointment_id": {
+                    "type": "integer",
+                    "description": "The ID of the appointment to cancel",
+                },
+            },
+            "required": ["appointment_id"],
+        },
+    },
+}
+
 def _execute_create_appointment(args: dict, patient: User, db: Session) -> dict:
     provider = db.query(User).filter(User.email == DEMO_PROVIDER_EMAIL).first()
     scheduled_at = datetime.strptime(f"{args['date']} {args['time']}", "%Y-%m-%d %H:%M").replace(tzinfo=CLINIC_TZ)
@@ -146,9 +165,27 @@ def _execute_update_appointment(args: dict, patient: User, db: Session) -> dict:
         "provider": appointment.provider.full_name,
     }
 
+def _execute_cancel_appointment(args: dict, patient: User, db: Session) -> dict:
+    appointment = db.query(Appointment).filter(Appointment.id == args["appointment_id"]).first()
+
+    if not appointment or appointment.patient_id != patient.id:
+        return {"status": "error", "message": "Appointment not found."}
+
+    appointment.status = AppointmentStatus.cancelled
+    
+    db.commit()
+    db.refresh(appointment)
+
+    return {
+        "status": "cancelled",
+        "appointment_id": appointment.id,
+        "provider": appointment.provider.full_name,
+    }
+
 TOOL_EXECUTORS = {
     "create_appointment": _execute_create_appointment,
     "update_appointment": _execute_update_appointment,
+    "cancel_appointment": _execute_cancel_appointment,
 }
 
 def get_chat_response(message: str, history: list, patient: User, db: Session) -> str:
@@ -159,7 +196,7 @@ def get_chat_response(message: str, history: list, patient: User, db: Session) -
     response = client.chat.complete(
         model="mistral-small-latest",
         messages=messages,
-        tools=[CREATE_APPOINTMENT_TOOL, UPDATE_APPOINTMENT_TOOL],
+        tools=[CREATE_APPOINTMENT_TOOL, UPDATE_APPOINTMENT_TOOL, CANCEL_APPOINTMENT_TOOL],
         tool_choice="auto",
     )
 
