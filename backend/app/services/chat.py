@@ -37,6 +37,7 @@ def build_system_prompt(patient: User, db: Session) -> str:
 
     return f"""You are a helpful scheduling assistant for a medical office.
 Today's date is {today.strftime('%Y-%m-%d')} ({today.strftime('%A')}).
+The office is open Monday-Friday 9am to 5pm, and closed on weekends.
 Your job is to help patients book and manage appointments with their healthcare provider.
 You can book appointments directly using the create_appointment tool and reschedule / cancel existing ones using the update_appointment tool or cancel_appointment tool — never tell the patient you're unable to do these things.
 The patient's current upcoming appointments are:
@@ -126,8 +127,13 @@ CANCEL_APPOINTMENT_TOOL = {
 }
 
 def _execute_create_appointment(args: dict, patient: User, db: Session) -> dict:
-    provider = db.query(User).filter(User.email == DEMO_PROVIDER_EMAIL).first()
     scheduled_at = datetime.strptime(f"{args['date']} {args['time']}", "%Y-%m-%d %H:%M").replace(tzinfo=CLINIC_TZ)
+
+    error = _validate_scheduled_at(scheduled_at)
+    if error:
+        return {"status": "error", "message": error}
+
+    provider = db.query(User).filter(User.email == DEMO_PROVIDER_EMAIL).first()
 
     appointment = Appointment(
         patient_id=patient.id,
@@ -152,9 +158,15 @@ def _execute_update_appointment(args: dict, patient: User, db: Session) -> dict:
     if not appointment or appointment.patient_id != patient.id:
         return {"status": "error", "message": "Appointment not found."}
 
-    appointment.scheduled_at = datetime.strptime(
+    scheduled_at = datetime.strptime(
         f"{args['date']} {args['time']}", "%Y-%m-%d %H:%M"
     ).replace(tzinfo=CLINIC_TZ)
+
+    error = _validate_scheduled_at(scheduled_at)
+    if error:
+        return {"status": "error", "message": error}
+
+    appointment.scheduled_at = scheduled_at
     appointment.reason = args["reason"]
     
     db.commit()
@@ -183,6 +195,16 @@ def _execute_cancel_appointment(args: dict, patient: User, db: Session) -> dict:
         "appointment_id": appointment.id,
         "provider": appointment.provider.full_name,
     }
+
+def _validate_scheduled_at(scheduled_at: datetime) -> str | None:
+    now = datetime.now(CLINIC_TZ)
+    if scheduled_at < now:
+        return "That date and time is in the past. Please choose a future date and time."
+    if scheduled_at.weekday() >= 5:
+        return "The clinic is closed on weekends. Please choose a weekday."
+    if not (9 <= scheduled_at.hour < 17):
+        return "The clinic is only open from 9 AM to 5 PM. Please choose a time in that range."
+    return None
 
 TOOL_EXECUTORS = {
     "create_appointment": _execute_create_appointment,
