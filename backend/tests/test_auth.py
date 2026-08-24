@@ -14,6 +14,7 @@ def test_hash_password_differs_from_plaintext():
     assert hashed != "mypassword123"
 
 
+#bcrypt generates a random salt per call, so hashing the same password twice must produce two different hashes
 def test_hash_password_is_salted():
     hashed_a = hash_password("mypassword123")
     hashed_b = hash_password("mypassword123")
