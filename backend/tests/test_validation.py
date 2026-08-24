@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-
 from app.services.chat import _validate_scheduled_at, CLINIC_TZ
 
 
