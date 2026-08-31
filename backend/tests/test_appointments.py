@@ -192,3 +192,49 @@ def test_create_appointment_allows_slot_freed_by_cancellation(db_session, patien
     )
 
     assert result["status"] == "confirmed"
+
+
+def test_update_appointment_rejects_conflicting_slot(db_session, patient, provider):
+    date, time = _next_valid_slot()
+    created = _execute_create_appointment(
+        {"date": date, "time": time, "reason": "Checkup"}, patient, db_session
+    )
+
+    other = _other_patient(db_session)
+    other_dt = _next_weekday_at(hour=11, weekday=0)
+    _execute_create_appointment(
+        {"date": other_dt.strftime("%Y-%m-%d"), "time": "11:00", "reason": "Follow-up"}, other, db_session
+    )
+
+    result = _execute_update_appointment(
+        {
+            "appointment_id": created["appointment_id"],
+            "date": other_dt.strftime("%Y-%m-%d"),
+            "time": "11:00",
+            "reason": "Trying to steal the slot",
+        },
+        patient,
+        db_session,
+    )
+
+    assert result["status"] == "error"
+
+
+def test_update_appointment_allows_keeping_same_time(db_session, patient, provider):
+    date, time = _next_valid_slot()
+    created = _execute_create_appointment(
+        {"date": date, "time": time, "reason": "Checkup"}, patient, db_session
+    )
+
+    result = _execute_update_appointment(
+        {
+            "appointment_id": created["appointment_id"],
+            "date": date,
+            "time": time,
+            "reason": "Updated reason, same time",
+        },
+        patient,
+        db_session,
+    )
+
+    assert result["status"] == "confirmed"

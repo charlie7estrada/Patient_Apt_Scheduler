@@ -169,6 +169,9 @@ def _execute_update_appointment(args: dict, patient: User, db: Session) -> dict:
     if error:
         return {"status": "error", "message": error}
 
+    if _has_conflicting_appointment(appointment.provider_id, scheduled_at, db, exclude_appointment_id=appointment.id):
+        return {"status": "error", "message": "That time is no longer available. Please choose a different time."}
+
     appointment.scheduled_at = scheduled_at
     appointment.reason = args["reason"]
     
