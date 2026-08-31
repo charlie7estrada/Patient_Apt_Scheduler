@@ -135,6 +135,9 @@ def _execute_create_appointment(args: dict, patient: User, db: Session) -> dict:
 
     provider = db.query(User).filter(User.email == DEMO_PROVIDER_EMAIL).first()
 
+    if _has_conflicting_appointment(provider.id, scheduled_at, db):
+        return {"status": "error", "message": "That time is no longer available. Please choose a different time."}
+
     appointment = Appointment(
         patient_id=patient.id,
         provider_id=provider.id,
@@ -205,6 +208,16 @@ def _validate_scheduled_at(scheduled_at: datetime) -> str | None:
     if not (9 <= scheduled_at.hour < 17):
         return "The clinic is only open from 9 AM to 5 PM. Please choose a time in that range."
     return None
+
+def _has_conflicting_appointment(provider_id: int, scheduled_at: datetime, db: Session, exclude_appointment_id: int | None = None) -> bool:
+    query = db.query(Appointment).filter(
+        Appointment.provider_id == provider_id,
+        Appointment.scheduled_at == scheduled_at,
+        Appointment.status != AppointmentStatus.cancelled,
+    )
+    if exclude_appointment_id is not None:
+        query = query.filter(Appointment.id != exclude_appointment_id)
+    return query.first() is not None
 
 TOOL_EXECUTORS = {
     "create_appointment": _execute_create_appointment,

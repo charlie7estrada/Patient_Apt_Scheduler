@@ -147,3 +147,48 @@ def test_cancel_appointment_rejects_other_patients_appointment(db_session, patie
     )
 
     assert result["status"] == "error"
+
+
+def test_create_appointment_rejects_conflicting_slot(db_session, patient, provider):
+    date, time = _next_valid_slot()
+    _execute_create_appointment(
+        {"date": date, "time": time, "reason": "Checkup"}, patient, db_session
+    )
+
+    other = _other_patient(db_session)
+    result = _execute_create_appointment(
+        {"date": date, "time": time, "reason": "Follow-up"}, other, db_session
+    )
+
+    assert result["status"] == "error"
+
+
+def test_create_appointment_allows_different_times(db_session, patient, provider):
+    date, time = _next_valid_slot()
+    first = _execute_create_appointment(
+        {"date": date, "time": time, "reason": "Checkup"}, patient, db_session
+    )
+
+    other = _other_patient(db_session)
+    other_dt = _next_weekday_at(hour=11, weekday=0)
+    second = _execute_create_appointment(
+        {"date": other_dt.strftime("%Y-%m-%d"), "time": "11:00", "reason": "Follow-up"}, other, db_session
+    )
+
+    assert first["status"] == "confirmed"
+    assert second["status"] == "confirmed"
+
+
+def test_create_appointment_allows_slot_freed_by_cancellation(db_session, patient, provider):
+    date, time = _next_valid_slot()
+    created = _execute_create_appointment(
+        {"date": date, "time": time, "reason": "Checkup"}, patient, db_session
+    )
+    _execute_cancel_appointment({"appointment_id": created["appointment_id"]}, patient, db_session)
+
+    other = _other_patient(db_session)
+    result = _execute_create_appointment(
+        {"date": date, "time": time, "reason": "Follow-up"}, other, db_session
+    )
+
+    assert result["status"] == "confirmed"
