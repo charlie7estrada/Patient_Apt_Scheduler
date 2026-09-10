@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+import logging
 from app.database import get_db
-from app.services.chat import get_chat_response
+from app.services.chat import get_chat_response, ChatUnavailableError
 from app.services.auth import get_current_user
 from app.models import User
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -21,5 +24,10 @@ def chat(
     try:
         response = get_chat_response(message.text, message.history, current_user, db)
         return {"response": response}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except ChatUnavailableError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception:
+        logger.exception("Unhandled error in chat endpoint")
+        raise HTTPException(
+            status_code=500, detail="Something went wrong. Please try again."
+        ) 

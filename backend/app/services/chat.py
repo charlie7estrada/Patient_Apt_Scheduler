@@ -1,9 +1,11 @@
 from mistralai import Mistral
+from mistralai.models import SDKError
 from dotenv import load_dotenv
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 import json
+import logging
 import os
 
 from app.models import Appointment, AppointmentStatus, User
@@ -11,9 +13,40 @@ from app.services.seed import DEMO_PROVIDER_EMAIL
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
 
 CLINIC_TZ = ZoneInfo("America/Chicago")
+
+class ChatUnavailableError(Exception):
+    """Raised when the AI provider is unreachable, rate limited, or errored."""
+
+RATE_LIMIT_MESSAGE = (
+    "I'm getting more requests than I can handle right now. "
+    "Please wait a moment and try again."
+)
+
+UNAVAILABLE_MESSAGE = (
+    "I'm having trouble connecting right now. Please try again in a moment."
+)
+
+
+def _complete(**kwargs):
+    """Call Mistral, converting provider failures into ChatUnavailableError."""
+    try:
+        return client.chat.complete(**kwargs)
+    except SDKError as e:
+        status = e.raw_response.status_code
+        logger.warning(
+            "Mistral API error: status=%s body=%s", status, e.raw_response.text[:500]
+        )
+        if status == 429:
+            raise ChatUnavailableError(RATE_LIMIT_MESSAGE) from e
+        raise ChatUnavailableError(UNAVAILABLE_MESSAGE) from e
+    except Exception as e:
+        logger.exception("Unexpected error calling Mistral")
+        raise ChatUnavailableError(UNAVAILABLE_MESSAGE) from e
 
 def build_system_prompt(patient: User, db: Session) -> str:
     today = datetime.now(CLINIC_TZ)
@@ -233,7 +266,7 @@ def get_chat_response(message: str, history: list, patient: User, db: Session) -
     messages.extend(history)
     messages.append({"role": "user", "content": message})
 
-    response = client.chat.complete(
+    response = _complete(
         model="mistral-small-latest",
         messages=messages,
         tools=[CREATE_APPOINTMENT_TOOL, UPDATE_APPOINTMENT_TOOL, CANCEL_APPOINTMENT_TOOL],
@@ -256,7 +289,7 @@ def get_chat_response(message: str, history: list, patient: User, db: Session) -
                 "content": json.dumps(result),
             })
 
-        follow_up = client.chat.complete(
+        follow_up = _complete(
             model="mistral-small-latest",
             messages=messages,
         )
