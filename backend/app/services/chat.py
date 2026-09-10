@@ -31,11 +31,13 @@ UNAVAILABLE_MESSAGE = (
     "I'm having trouble connecting right now. Please try again in a moment."
 )
 
+MISTRAL_TIMEOUT_MS = 30_000
+
 
 def _complete(**kwargs):
     """Call Mistral, converting provider failures into ChatUnavailableError."""
     try:
-        return client.chat.complete(**kwargs)
+        return client.chat.complete(timeout_ms=MISTRAL_TIMEOUT_MS, **kwargs)
     except SDKError as e:
         status = e.raw_response.status_code
         logger.warning(

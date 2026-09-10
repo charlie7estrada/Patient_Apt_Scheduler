@@ -20,10 +20,14 @@ function Dashboard() {
   const [appointments, setAppointments] = useState([])
 
   async function fetchAppointments() {
-    const response = await apiFetch('/api/v1/appointments/')
-    if (!response) return
-    const data = await response.json()
-    setAppointments(data)
+    try {
+      const response = await apiFetch('/api/v1/appointments/')
+      if (!response || !response.ok) return
+      const data = await response.json().catch(() => null)
+      if (Array.isArray(data)) setAppointments(data)
+    } catch {
+    // keep whatever list is already on screen; chat surfaces its own errors
+    }
   }
 
   useEffect(() => {
