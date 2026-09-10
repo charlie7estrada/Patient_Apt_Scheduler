@@ -46,21 +46,40 @@ function Dashboard() {
     setInput('')
     setLoading(true)
 
-    const history = updatedMessages.slice(0, -1).map(m => ({
-      role: m.role,
-      content: m.content
+    const history = updatedMessages
+      .slice(0, -1)
+      .filter(m => !m.isError)
+      .map(m => ({ role: m.role, content: m.content
     }))
 
-    const response = await apiFetch('/api/v1/chat/', {
-      method: 'POST',
-      body: JSON.stringify({ text: input, history })
+    try {
+      const response = await apiFetch('/api/v1/chat/', {
+        method: 'POST',
+        body: JSON.stringify({ text: input, history })
     })
 
-    if (!response) return
+    if (response) {
+      const data = await response.json().catch(()=> ({}))
+    
+      if (response.ok) {
+        setMessages([...updatedMessages, { role: 'assistant', content: data.response }])
+        fetchAppointments()
+      } else {
+        setMessages([...updatedMessages, {
+          role: 'assistant',
+          isError: true,
+          content: data.detail || 'Something went wrong. Please try again.'
+        }])
+      }
+    }
+    } catch {
+      setMessages([...updatedMessages, {
+        role: 'assistant',
+        isError: true,
+        content: 'Could not reach the server. Please check your connection and try again.'
+      }])
+    }
 
-    const data = await response.json()
-    setMessages([...updatedMessages, { role: 'assistant', content: data.response }])
-    fetchAppointments()
     setLoading(false)
   }
 
@@ -117,6 +136,8 @@ function Dashboard() {
                 <div className={`max-w-sm px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                   msg.role === 'user'
                     ? 'bg-teal-600 text-white'
+                    : msg.isError
+                    ? 'bg-red-50 border border-red-200 text-red-700'
                     : 'bg-slate-100 text-slate-700'
                 }`}>
                   {msg.content}
