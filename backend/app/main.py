@@ -3,11 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.routes import auth, chat, appointments
 from app.services.seed import seed_demo_provider
+from app.services.guest import purge_expired_guests
+from app.database import SessionLocal
 import os
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     seed_demo_provider()
+    db = SessionLocal()
+    try:
+        purge_expired_guests(db)
+    finally:
+        db.close()
     yield
 
 app = FastAPI(title="Patient Appointment Scheduler API", lifespan=lifespan)
