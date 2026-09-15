@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum
+from sqlalchemy import Column, Integer, String, Boolean, Enum, DateTime, false, func
 from app.database import Base
 import enum
 
@@ -15,3 +15,5 @@ class User(Base):
     full_name = Column(String, nullable=False)
     role = Column(Enum(UserRole), nullable=False)
     is_active = Column(Boolean, default=True)
+    is_guest = Column(Boolean, nullable=False, default=False, server_default=false())
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
