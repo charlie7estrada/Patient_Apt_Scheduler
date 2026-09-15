@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import { isGuestSession } from '../lib/auth'
 
 const statusStyles = {
   pending: 'bg-amber-100 text-amber-700',
@@ -9,9 +10,13 @@ const statusStyles = {
   completed: 'bg-slate-100 text-slate-600',
 }
 
+const GREETING = 'Hi! I can help you book an appointment. What brings you in today?'
+const GUEST_GREETING = 'Hi! This demo account already has two sample appointments. Try booking a new one, or ask me to reschedule or cancel one of them.'
+
 function Dashboard() {
+  const [isGuest] = useState(isGuestSession)
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Hi! I can help you book an appointment. What brings you in today?' }
+    { role: 'assistant', content: isGuest ? GUEST_GREETING : GREETING }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -38,6 +43,11 @@ function Dashboard() {
   function handleLogout() {
     localStorage.removeItem('token')
     navigate('/login')
+  }
+
+  function handleCreateAccount() {
+    localStorage.removeItem('token')
+    navigate('/register')
   }
 
   async function handleSend(e) {
@@ -102,9 +112,18 @@ function Dashboard() {
           onClick={handleLogout}
           className="text-sm text-slate-500 hover:text-red-600 transition"
         >
-          Logout
+          {isGuest ? 'Exit demo' : 'Logout'}
         </button>
       </header>
+
+      {isGuest && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 text-sm text-amber-800 text-center">
+          You're using a demo account. Anything you book is deleted after 24 hours.{' '}
+          <button onClick={handleCreateAccount} className="font-medium underline hover:text-amber-900">
+            Create a free account
+          </button>
+        </div>
+      )}
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-6 flex gap-6">
         <aside className="w-72 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-100 p-5 h-fit">

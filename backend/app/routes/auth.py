@@ -47,5 +47,5 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/guest", status_code=status.HTTP_201_CREATED)
 def guest_login(db: Session = Depends(get_db)):
     guest = create_guest_user(db)
-    token = create_access_token({"sub": guest.email, "role": guest.role.value})
+    token = create_access_token({"sub": guest.email, "role": guest.role.value, "guest": True})
     return {"access_token": token, "token_type": "bearer"}

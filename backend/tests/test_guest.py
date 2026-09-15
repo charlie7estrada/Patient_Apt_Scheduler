@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
+from jose import jwt
+
 from app.models import Appointment, AppointmentStatus, User, UserRole
 from app.services.chat import CLINIC_TZ, _validate_scheduled_at
 from app.services.guest import (
@@ -47,6 +49,27 @@ def test_guest_token_authenticates(client):
     )
 
     assert response.status_code == 200
+
+
+def test_guest_token_has_guest_claim(client):
+    token = client.post("/api/v1/auth/guest").json()["access_token"]
+
+    assert jwt.get_unverified_claims(token)["guest"] is True
+
+
+def test_login_token_has_no_guest_claim(client):
+    client.post("/api/v1/auth/register", json={
+        "email": "patient@example.com",
+        "password": "securepassword123",
+        "full_name": "Test Patient",
+        "role": "patient",
+    })
+    token = client.post("/api/v1/auth/login", json={
+        "email": "patient@example.com",
+        "password": "securepassword123",
+    }).json()["access_token"]
+
+    assert "guest" not in jwt.get_unverified_claims(token)
 
 
 def test_registered_users_are_not_guests(client, db_session):

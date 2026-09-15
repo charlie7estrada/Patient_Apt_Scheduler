@@ -6,6 +6,7 @@ function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [guestLoading, setGuestLoading] = useState(false)
   const navigate = useNavigate()
 
   async function handleSubmit(e) {
@@ -33,6 +34,31 @@ function Login() {
       setError('Could not reach the server. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleGuestLogin() {
+    setError('')
+    setGuestLoading(true)
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/guest`, {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.detail || 'Could not start the demo')
+        return
+      }
+
+      localStorage.setItem('token', data.access_token)
+      navigate('/dashboard')
+    } catch {
+      setError('Could not reach the server. Please try again.')
+    } finally {
+      setGuestLoading(false)
     }
   }
 
@@ -78,7 +104,7 @@ function Login() {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || guestLoading}
             className="w-full bg-teal-600 text-white font-medium py-2.5 rounded-lg shadow-sm hover:bg-teal-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading && (
@@ -95,6 +121,32 @@ function Login() {
             </p>
           )}
         </form>
+
+        <div className="flex items-center gap-3 my-6">
+          <div className="flex-1 h-px bg-slate-200" />
+          <span className="text-xs text-slate-400 uppercase tracking-wide">or</span>
+          <div className="flex-1 h-px bg-slate-200" />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGuestLogin}
+          disabled={loading || guestLoading}
+          className="w-full border border-teal-600 text-teal-700 font-medium py-2.5 rounded-lg hover:bg-teal-50 transition disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {guestLoading && (
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+          )}
+          {guestLoading ? 'Starting demo…' : 'Try the demo'}
+        </button>
+        <p className="text-xs text-slate-400 mt-2 text-center">
+          {guestLoading
+            ? 'This can take up to a minute if the server is waking up from idle.'
+            : 'No account needed. Demo data is deleted after 24 hours.'}
+        </p>
 
         <p className="text-sm text-slate-500 mt-6 text-center">
           Don't have an account?{' '}
