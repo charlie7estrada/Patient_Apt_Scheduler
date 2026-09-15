@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr
 from app.database import get_db
 from app.models import User, UserRole
 from app.services.auth import hash_password, verify_password, create_access_token
+from app.services.guest import create_guest_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -41,4 +42,10 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = create_access_token({"sub": user.email, "role": user.role.value})
+    return {"access_token": token, "token_type": "bearer"}
+
+@router.post("/guest", status_code=status.HTTP_201_CREATED)
+def guest_login(db: Session = Depends(get_db)):
+    guest = create_guest_user(db)
+    token = create_access_token({"sub": guest.email, "role": guest.role.value})
     return {"access_token": token, "token_type": "bearer"}
