@@ -5,6 +5,8 @@ from app.routes import auth, chat, appointments
 from app.services.seed import seed_demo_provider
 from app.services.guest import purge_expired_guests
 from app.database import SessionLocal
+from app.services.appointments import complete_past_appointments
+
 import os
 
 @asynccontextmanager
@@ -13,6 +15,7 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         purge_expired_guests(db)
+        complete_past_appointments(db)
     finally:
         db.close()
     yield

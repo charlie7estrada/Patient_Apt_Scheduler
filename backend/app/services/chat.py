@@ -2,7 +2,6 @@ from mistralai import Mistral
 from mistralai.models import SDKError
 from dotenv import load_dotenv
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 import json
 import logging
@@ -10,14 +9,13 @@ import os
 
 from app.models import Appointment, AppointmentStatus, User
 from app.services.seed import DEMO_PROVIDER_EMAIL
+from app.services.appointments import CLINIC_TZ
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
-
-CLINIC_TZ = ZoneInfo("America/Chicago")
 
 class ChatUnavailableError(Exception):
     """Raised when the AI provider is unreachable, rate limited, or errored."""

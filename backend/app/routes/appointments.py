@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Appointment, User
 from app.services.auth import get_current_user
+from app.services.appointments import complete_past_appointments
+
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
@@ -11,6 +13,8 @@ def list_appointments(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    complete_past_appointments(db)
+    
     appointments = (
         db.query(Appointment)
         .filter(Appointment.patient_id == current_user.id)
