@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from app.models import Appointment, User, UserRole
+from app.models import Appointment, AppointmentStatus, User, UserRole
 from app.services.chat import (
     CLINIC_TZ,
     _execute_cancel_appointment,
@@ -43,6 +43,9 @@ def test_create_appointment_success(db_session, patient, provider):
 
     assert result["status"] == "confirmed"
     assert result["provider"] == provider.full_name
+
+    saved = db_session.query(Appointment).one()
+    assert saved.status == AppointmentStatus.confirmed
 
 
 def test_create_appointment_rejects_invalid_time(db_session, patient, provider):
@@ -238,3 +241,28 @@ def test_update_appointment_allows_keeping_same_time(db_session, patient, provid
     )
 
     assert result["status"] == "confirmed"
+
+def test_update_appointment_confirms_a_completed_appointment(db_session, patient, provider):
+    date, time = _next_valid_slot()
+    created = _execute_create_appointment(
+        {"date": date, "time": time, "reason": "Checkup"}, patient, db_session
+    )
+    appointment = db_session.query(Appointment).one()
+    appointment.status = AppointmentStatus.completed
+    db_session.commit()
+
+    later = _next_weekday_at(hour=15, weekday=2)
+    result = _execute_update_appointment(
+        {
+            "appointment_id": created["appointment_id"],
+            "date": later.strftime("%Y-%m-%d"),
+            "time": "15:00",
+            "reason": "Rebooked after missing it",
+        },
+        patient,
+        db_session,
+    )
+
+    assert result["status"] == "confirmed"
+    db_session.refresh(appointment)
+    assert appointment.status == AppointmentStatus.confirmed

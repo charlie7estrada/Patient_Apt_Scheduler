@@ -96,7 +96,7 @@ def test_guest_gets_two_sample_appointments(client, db_session, provider):
     assert len(appointments) == 2
     assert {a.reason for a in appointments} == set(SAMPLE_REASONS)
     assert all(a.provider_id == provider.id for a in appointments)
-    assert all(a.status == AppointmentStatus.pending for a in appointments)
+    assert all(a.status == AppointmentStatus.confirmed for a in appointments)
 
 
 def test_sample_appointments_are_bookable_slots_on_different_days(client, db_session, provider):

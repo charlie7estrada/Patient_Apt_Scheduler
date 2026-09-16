@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
-from app.models import Appointment, User, UserRole
+from app.models import Appointment, AppointmentStatus, User, UserRole
 from app.services.auth import hash_password
 from app.services.chat import CLINIC_TZ, _has_conflicting_appointment, _validate_scheduled_at
 from app.services.seed import DEMO_PROVIDER_EMAIL
@@ -52,6 +52,7 @@ def _seed_sample_appointments(guest: User, db: Session) -> None:
             provider_id=provider.id,
             scheduled_at=slot,
             reason=reason,
+            status=AppointmentStatus.confirmed,
         ))
         db.flush()
 

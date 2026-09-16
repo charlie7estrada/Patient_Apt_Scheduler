@@ -178,6 +178,7 @@ def _execute_create_appointment(args: dict, patient: User, db: Session) -> dict:
         provider_id=provider.id,
         scheduled_at=scheduled_at,
         reason=args["reason"],
+        status=AppointmentStatus.confirmed,
     )
     db.add(appointment)
     db.commit()
@@ -209,6 +210,7 @@ def _execute_update_appointment(args: dict, patient: User, db: Session) -> dict:
 
     appointment.scheduled_at = scheduled_at
     appointment.reason = args["reason"]
+    appointment.status = AppointmentStatus.confirmed
     
     db.commit()
     db.refresh(appointment)
