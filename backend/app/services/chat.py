@@ -9,7 +9,7 @@ import os
 
 from app.models import Appointment, AppointmentStatus, User
 from app.services.seed import DEMO_PROVIDER_EMAIL
-from app.services.appointments import CLINIC_TZ
+from app.services.appointments import CLINIC_TZ, complete_past_appointments
 
 load_dotenv()
 
@@ -51,10 +51,12 @@ def _complete(**kwargs):
 def build_system_prompt(patient: User, db: Session) -> str:
     today = datetime.now(CLINIC_TZ)
 
+    complete_past_appointments(db)
+
     appointments = (
         db.query(Appointment)
         .filter(Appointment.patient_id == patient.id)
-        .filter(Appointment.status != AppointmentStatus.cancelled)
+        .filter(Appointment.status.notin_([AppointmentStatus.cancelled, AppointmentStatus.completed]))
         .order_by(Appointment.scheduled_at)
         .all()
     )
@@ -225,6 +227,9 @@ def _execute_cancel_appointment(args: dict, patient: User, db: Session) -> dict:
 
     if not appointment or appointment.patient_id != patient.id:
         return {"status": "error", "message": "Appointment not found."}
+
+    if appointment.status == AppointmentStatus.completed:
+        return {"status": "error", "message": "That appointment has already taken place."}
 
     appointment.status = AppointmentStatus.cancelled
     
