@@ -9,9 +9,19 @@ const statusStyles = {
   cancelled: 'bg-red-100 text-red-700',
   completed: 'bg-slate-100 text-slate-600',
 }
-
+const PAST_STATUSES = ['completed', 'cancelled']
 const GREETING = 'Hi! I can help you book an appointment. What brings you in today?'
 const GUEST_GREETING = 'Hi! This demo account already has two sample appointments. Try booking a new one, or ask me to reschedule or cancel one of them.'
+
+function sortAppointments(appointments) {
+  const byTime = (a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at)
+  const isPast = a => PAST_STATUSES.includes(a.status)
+
+  return [
+    ...appointments.filter(a => !isPast(a)).sort(byTime),
+    ...appointments.filter(isPast).sort((a, b) => byTime(b, a)),
+  ]
+}
 
 function Dashboard() {
   const [isGuest] = useState(isGuestSession)
@@ -127,13 +137,18 @@ function Dashboard() {
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-6 flex gap-6">
         <aside className="w-72 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-100 p-5 h-fit">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Upcoming Appointments</h2>
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Your Appointments</h2>
           {appointments.length === 0 ? (
             <p className="text-sm text-slate-400 italic">No appointments booked yet.</p>
           ) : (
             <ul className="space-y-3">
-              {appointments.map(a => (
-                <li key={a.id} className="border border-slate-100 bg-slate-50/50 rounded-xl p-3">
+              {sortAppointments(appointments).map(a => (
+                <li 
+                  key={a.id} 
+                  className={`border border-slate-100 bg-slate-50/50 rounded-xl p-3 ${
+                    PAST_STATUSES.includes(a.status) ? 'opacity-60' : ''
+                  }`}
+                >
                   <p className="text-sm font-medium text-slate-800">
                     {new Date(a.scheduled_at).toLocaleString([], { 
                       dateStyle: 'medium', 
