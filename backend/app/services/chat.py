@@ -268,9 +268,15 @@ def _validate_scheduled_at(scheduled_at: datetime) -> str | None:
     return None
 
 def _has_conflicting_appointment(provider_id: int, scheduled_at: datetime, db: Session, exclude_appointment_id: int | None = None) -> bool:
+    # Two 30-minute appointments overlap exactly when the existing one starts
+    # strictly inside (new start - 30min, new start + 30min).
+    window_start = scheduled_at - APPOINTMENT_DURATION
+    window_end = scheduled_at + APPOINTMENT_DURATION
+
     query = db.query(Appointment).filter(
         Appointment.provider_id == provider_id,
-        Appointment.scheduled_at == scheduled_at,
+        Appointment.scheduled_at > window_start,
+        Appointment.scheduled_at < window_end,
         Appointment.status != AppointmentStatus.cancelled,
     )
     if exclude_appointment_id is not None:
