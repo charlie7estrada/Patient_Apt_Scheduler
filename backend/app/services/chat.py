@@ -9,7 +9,14 @@ import os
 
 from app.models import Appointment, AppointmentStatus, User
 from app.services.seed import DEMO_PROVIDER_EMAIL
-from app.services.appointments import CLINIC_TZ, complete_past_appointments
+from app.services.appointments import (
+    APPOINTMENT_DURATION,
+    CLINIC_CLOSE_HOUR,
+    CLINIC_OPEN_HOUR,
+    SLOT_INTERVAL_MINUTES,
+    CLINIC_TZ,
+    complete_past_appointments,
+)
 
 load_dotenv()
 
@@ -248,8 +255,16 @@ def _validate_scheduled_at(scheduled_at: datetime) -> str | None:
         return "That date and time is in the past. Please choose a future date and time."
     if scheduled_at.weekday() >= 5:
         return "The clinic is closed on weekends. Please choose a weekday."
-    if not (9 <= scheduled_at.hour < 17):
-        return "The clinic is only open from 9 AM to 5 PM. Please choose a time in that range."
+    
+    opens = scheduled_at.replace(hour=CLINIC_OPEN_HOUR, minute=0)
+    closes = scheduled_at.replace(hour=CLINIC_CLOSE_HOUR, minute=0)
+    if scheduled_at < opens or scheduled_at + APPOINTMENT_DURATION > closes:
+        return ("Please choose a time between 9 AM and 4:30 PM.") 
+            # Appointments run 30 minutes and the clinic closes at 5 PM, so the last one starts at 4:30 PM. 
+
+    if scheduled_at.minute % SLOT_INTERVAL_MINUTES:
+        return "Appointments start on the quarter hour: :00, :15, :30, or :45."
+    
     return None
 
 def _has_conflicting_appointment(provider_id: int, scheduled_at: datetime, db: Session, exclude_appointment_id: int | None = None) -> bool:

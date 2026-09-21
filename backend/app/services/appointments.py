@@ -7,6 +7,9 @@ from app.models import Appointment, AppointmentStatus
 
 CLINIC_TZ = ZoneInfo("America/Chicago")
 APPOINTMENT_DURATION = timedelta(minutes=30)
+SLOT_INTERVAL_MINUTES = 15
+CLINIC_OPEN_HOUR = 9
+CLINIC_CLOSE_HOUR = 17
 
 
 def complete_past_appointments(db: Session) -> int:
