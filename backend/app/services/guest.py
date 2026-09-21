@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.models import Appointment, AppointmentStatus, User, UserRole
 from app.services.auth import hash_password
-from app.services.chat import CLINIC_TZ, _has_conflicting_appointment, _validate_scheduled_at
+from app.services.appointments import CLINIC_CLOSE_HOUR, CLINIC_OPEN_HOUR, CLINIC_TZ
+from app.services.chat import _has_conflicting_appointment, _validate_scheduled_at
 from app.services.seed import DEMO_PROVIDER_EMAIL
 
 GUEST_EMAIL_DOMAIN = "guest.patientscheduler.app"
@@ -62,7 +63,7 @@ def _seed_sample_appointments(guest: User, db: Session) -> None:
 
 
 def _first_open_slot(provider_id: int, day: date, db: Session) -> datetime | None:
-    for hour in range(9, 17):
+    for hour in range(CLINIC_OPEN_HOUR, CLINIC_CLOSE_HOUR):
         slot = datetime.combine(day, time(hour), tzinfo=CLINIC_TZ)
         if _validate_scheduled_at(slot):
             continue
