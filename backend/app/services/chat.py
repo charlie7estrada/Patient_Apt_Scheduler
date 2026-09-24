@@ -220,6 +220,7 @@ def _execute_update_appointment(args: dict, patient: User, db: Session) -> dict:
     appointment.scheduled_at = scheduled_at
     appointment.reason = args["reason"]
     appointment.status = AppointmentStatus.confirmed
+    appointment.is_archived = False
     
     db.commit()
     db.refresh(appointment)
