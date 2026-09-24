@@ -353,3 +353,15 @@ def test_update_appointment_allows_shifting_within_its_own_window(db_session, pa
     )
 
     assert result["status"] == "confirmed"
+
+def test_new_appointment_is_not_archived(db_session, patient, provider):
+    date, time = _next_valid_slot()
+    created = _execute_create_appointment(
+        {"date": date, "time": time, "reason": "Checkup"}, patient, db_session
+    )
+
+    appointment = db_session.query(Appointment).filter(
+        Appointment.id == created["appointment_id"]
+    ).one()
+
+    assert appointment.is_archived is False

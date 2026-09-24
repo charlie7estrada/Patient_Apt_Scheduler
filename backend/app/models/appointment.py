@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Boolean, false
 from sqlalchemy.orm import relationship
 from app.database import Base
 import enum
@@ -18,6 +18,7 @@ class Appointment(Base):
     scheduled_at = Column(DateTime(timezone=True), nullable=False)
     reason = Column(String, nullable=True)
     status = Column(Enum(AppointmentStatus), default=AppointmentStatus.pending)
+    is_archived = Column(Boolean, nullable=False, default=False, server_default=false())
 
     patient = relationship("User", foreign_keys=[patient_id])
     provider = relationship("User", foreign_keys=[provider_id])
