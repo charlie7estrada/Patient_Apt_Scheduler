@@ -33,10 +33,11 @@ function Dashboard() {
   const navigate = useNavigate()
 
   const [appointments, setAppointments] = useState([])
+  const [showArchived, setShowArchived] = useState(false)
 
   async function fetchAppointments() {
     try {
-      const response = await apiFetch('/api/v1/appointments/')
+      const response = await apiFetch(`/api/v1/appointments/?include_archived=${showArchived}`)
       if (!response || !response.ok) return
       const data = await response.json().catch(() => null)
       if (Array.isArray(data)) setAppointments(data)
@@ -45,10 +46,20 @@ function Dashboard() {
     }
   }
 
+  async function handleArchive(id) {
+    try {
+      const response = await apiFetch(`/api/v1/appointments/${id}/archive`, { method: 'POST' })
+      if (!response || !response.ok) return
+      fetchAppointments()
+    } catch {
+    // leave the list alone; the next refresh reconciles it
+    }
+  }
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAppointments()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showArchived])
 
   function handleLogout() {
     localStorage.removeItem('token')
@@ -145,10 +156,20 @@ function Dashboard() {
               {sortAppointments(appointments).map(a => (
                 <li 
                   key={a.id} 
-                  className={`border border-slate-100 bg-slate-50/50 rounded-xl p-3 ${
+                  className={`relative border border-slate-100 bg-slate-50/50 rounded-xl p-3 ${
                     PAST_STATUSES.includes(a.status) ? 'opacity-60' : ''
                   }`}
                 >
+                  {PAST_STATUSES.includes(a.status) && !a.is_archived && (
+                    <button
+                      onClick={() => handleArchive(a.id)}
+                      aria-label="Archive appointment"
+                      title="Archive"
+                      className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-slate-300 hover:text-slate-600 transition"
+                    >
+                      &times;
+                    </button>
+                  )}
                   <p className="text-sm font-medium text-slate-800">
                     {new Date(a.scheduled_at).toLocaleString([], { 
                       dateStyle: 'medium', 
@@ -161,10 +182,21 @@ function Dashboard() {
                   <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full capitalize ${statusStyles[a.status] ?? 'bg-slate-100 text-slate-600'}`}>
                     {a.status}
                   </span>
+                  {a.is_archived && (
+                    <span className="inline-block mt-2 ml-1.5 text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">
+                      archived
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
           )}
+          <button
+            onClick={() => setShowArchived(v => !v)}
+            className="mt-4 text-xs text-slate-400 hover:text-slate-600 transition"
+          >
+            {showArchived ? 'Hide archived' : 'Show archived'}
+          </button>
         </aside>
 
         <div className="flex-1 flex flex-col">
