@@ -101,6 +101,9 @@ function Login() {
               className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
               required
             />
+          <div className="text-right mt-1">
+              <Link to="/forgot-password" className="text-sm text-teal-600 hover:text-teal-700 font-medium">Forgot password?</Link>
+          </div>
           </div>
           <button
             type="submit"
