@@ -15,14 +15,13 @@ A full-stack web application that lets patients book appointments with their hea
 - Chatbot is date/timezone-aware (Central Time) and confirms with the patient before cancelling anything
 - Appointment date/time validated against clinic hours - no past-dated or after-hours bookings
 - JWT-based patient authentication (register/login) with loading and error states
+- Password reset with single-use, 30 minutes links. No email provider is connected to keep dependencies down, so the link is written to the backend log. Contact me if you need a reset.
 - One-click guest demo, no registration, seeded with sample appointments and cleaned up automatically
-- Upcoming appointments dashboard, scoped per patient, with live status (pending/cancelled)
+- Upcoming appointments dashboard, scoped per patient, with live status (confirmed/cancelled/completed)
 - Deployed end-to-end: FastAPI on Render, React on Vercel, Postgres on Neon
 
 ### Not yet built
 - Provider-side dashboard (accepting/managing appointments — currently a single seeded demo provider handles all bookings)
-- Appointment status beyond pending/cancelled (confirmed/completed are modeled but never set)
-- Password reset flow
 
 ## Tech Stack
 
