@@ -7,6 +7,7 @@ from app.models import ChatMessageLog, User
 CHAT_WINDOW = timedelta(hours=1)
 GUEST_CHAT_LIMIT = 20
 REGISTERED_CHAT_LIMIT = 100
+CHAT_LIMIT_MESSAGE = "Message limit reached! Feel free to try again in an hour."
 
 
 def chat_limit_for(user: User) -> int:
