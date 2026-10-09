@@ -10,6 +10,7 @@ from app.services.rate_limit import (
     GUEST_CREATION_LIMIT,
     REGISTERED_CHAT_LIMIT,
     client_ip,
+    prune_rate_limit_logs,
     refund_chat_message,
     refund_guest_creation,
     reserve_chat_message,
@@ -124,4 +125,19 @@ def test_guest_creation_refund_frees_the_slot(db_session):
     refund_guest_creation(last, db_session)
 
     assert reserve_guest_creation("203.0.113.7", db_session) is not None
-    
+
+
+def test_prune_deletes_only_rows_past_retention(db_session, guest):
+    old = datetime.now(timezone.utc) - timedelta(hours=25)
+    recent = datetime.now(timezone.utc) - timedelta(minutes=5)
+    db_session.add_all([
+        ChatMessageLog(user_id=guest.id, created_at=old),
+        ChatMessageLog(user_id=guest.id, created_at=recent),
+        GuestCreationLog(ip="203.0.113.7", created_at=old),
+        GuestCreationLog(ip="203.0.113.7", created_at=recent),
+    ])
+    db_session.commit()
+
+    assert prune_rate_limit_logs(db_session) == 2
+    assert db_session.query(ChatMessageLog).count() == 1
+    assert db_session.query(GuestCreationLog).count() == 1

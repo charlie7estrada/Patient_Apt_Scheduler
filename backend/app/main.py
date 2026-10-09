@@ -6,6 +6,7 @@ from app.services.seed import seed_demo_provider
 from app.services.guest import purge_expired_guests
 from app.database import SessionLocal
 from app.services.appointments import complete_past_appointments
+from app.services.rate_limit import prune_rate_limit_logs
 
 import os
 
@@ -16,6 +17,7 @@ async def lifespan(app: FastAPI):
     try:
         purge_expired_guests(db)
         complete_past_appointments(db)
+        prune_rate_limit_logs(db)
     finally:
         db.close()
     yield

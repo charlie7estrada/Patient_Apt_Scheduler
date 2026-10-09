@@ -17,6 +17,7 @@ A full-stack web application that lets patients book appointments with their hea
 - JWT-based patient authentication (register/login) with loading and error states
 - Password reset with single-use, 30 minutes links. No email provider is connected to keep dependencies down, so the link is written to the backend log. Contact me if you need a reset.
 - One-click guest demo, no registration, seeded with sample appointments and cleaned up automatically
+- Rate limits protect the shared AI quota: guests can send 20 chat messages per hour (registered patients 100), and each IP can start 5 demo accounts per day
 - Upcoming appointments dashboard, scoped per patient, with live status (confirmed/cancelled/completed)
 - Deployed end-to-end: FastAPI on Render, React on Vercel, Postgres on Neon
 
@@ -74,5 +75,7 @@ npm run dev
 "Try the demo" calls `POST /api/v1/auth/guest`, which creates a patient account with a random email and no usable password, then returns a JWT the same way login does. Each guest is seeded with two appointments in the next open slots on the provider's calendar, so the slots are never double-booked.
 
 Guest accounts and their appointments are deleted 24 hours after creation. The purge runs at application startup.
+
+Each IP address can start 5 demo accounts per 24 hours, and each guest can send 20 chat messages per hour (registered patients get 100). Going over either limit returns a 429 with a message saying when to try again. Failed requests don't count against the limit. The client IP comes from the `True-Client-IP` header that Cloudflare sets in front of Render. Rate-limit records are deleted 24 hours after they're written, at application startup.
 
 If the assistant replies that it is getting more requests than it can handle, the demo has hit its AI provider rate limit. Appointments booked before that still show in the sidebar.

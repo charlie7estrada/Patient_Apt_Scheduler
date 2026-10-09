@@ -14,6 +14,8 @@ GUEST_CREATION_WINDOW = timedelta(days=1)
 GUEST_CREATION_LIMIT = 5
 GUEST_CREATION_LIMIT_MESSAGE = "Demo limit reached for today. Create a free account to keep going."
 
+# Rows older than every limit window never count again, so keep them only that long
+RATE_LIMIT_RETENTION = max(CHAT_WINDOW, GUEST_CREATION_WINDOW)
 
 def chat_limit_for(user: User) -> int:
     return GUEST_CHAT_LIMIT if user.is_guest else REGISTERED_CHAT_LIMIT
@@ -81,3 +83,17 @@ def refund_guest_creation(reservation: GuestCreationLog, db: Session) -> None:
     db.rollback()
     db.delete(reservation)
     db.commit()
+
+
+# Runs at startup alongside the guest purge. Late pruning only costs space, never correctness,
+# because the limit checks already ignore rows outside their window.
+def prune_rate_limit_logs(db: Session) -> int:
+    cutoff = datetime.now(timezone.utc) - RATE_LIMIT_RETENTION
+    deleted = db.query(ChatMessageLog).filter(
+        ChatMessageLog.created_at < cutoff,
+    ).delete(synchronize_session=False)
+    deleted += db.query(GuestCreationLog).filter(
+        GuestCreationLog.created_at < cutoff,
+    ).delete(synchronize_session=False)
+    db.commit()
+    return deleted
