@@ -52,3 +52,22 @@ def test_login_fails_for_nonexistent_user(client):
     })
 
     assert response.status_code == 401
+
+
+def test_me_returns_only_full_name(client):
+    client.post("/api/v1/auth/register", json=_register_payload())
+    token = client.post("/api/v1/auth/login", json={
+        "email": "patient@example.com",
+        "password": "securepassword123",
+    }).json()["access_token"]
+
+    response = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+
+    assert response.status_code == 200
+    assert response.json() == {"full_name": "Test Patient"}
+
+
+def test_me_requires_login(client):
+    response = client.get("/api/v1/auth/me")
+
+    assert response.status_code == 401

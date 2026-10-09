@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 from app.database import get_db
 from app.models import User, UserRole
-from app.services.auth import hash_password, verify_password, create_access_token
+from app.services.auth import hash_password, verify_password, create_access_token, get_current_user
 from app.services.guest import create_guest_user
 from app.services.password_reset import create_reset_token, redeem_reset_token
 from app.services.email import build_reset_link, send_password_reset_email
@@ -100,3 +100,8 @@ def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     if not redeem_reset_token(data.token, data.new_password, db):
         raise HTTPException(status_code=400, detail="This reset link is invalid or has expired")
     return {"message": "Password updated"}
+
+# Only what the frontend displays, so new User columns can't leak through this endpoint
+@router.get("/me")
+def me(current_user: User = Depends(get_current_user)):
+    return {"full_name": current_user.full_name}
