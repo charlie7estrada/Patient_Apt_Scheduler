@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { apiFetch } from '../lib/api'
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -22,9 +23,8 @@ function Register() {
     setLoading(true)
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/register`, {
+      const response = await apiFetch(`/api/v1/auth/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       })
 

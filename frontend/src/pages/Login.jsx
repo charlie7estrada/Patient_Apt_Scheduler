@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { apiFetch } from '../lib/api'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -15,9 +16,8 @@ function Login() {
     setLoading(true)
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/login`, {
+      const response = await apiFetch(`/api/v1/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       })
 
@@ -42,7 +42,7 @@ function Login() {
     setGuestLoading(true)
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/guest`, {
+      const response = await apiFetch(`/api/v1/auth/guest`, {
         method: 'POST'
       })
 

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { apiFetch } from '../lib/api'
 
 function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -23,9 +24,8 @@ function ResetPassword() {
     setLoading(true)
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/reset-password`, {
+      const response = await apiFetch(`/api/v1/auth/reset-password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, new_password: password })
       })
 
