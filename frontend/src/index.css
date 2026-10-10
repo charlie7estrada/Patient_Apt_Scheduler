@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+/* Palette sampled from Heidi, with teal in place of its green. Named by job so
+   components never reference raw colors. */
+@theme {
+  --color-page: #fcfaf8;
+  --color-surface: #ffffff;
+  --color-subtle: #f9f5f2;
+  --color-line: #eee8df;
+  --color-ink: #16080d;
+  --color-ink-muted: #685158;
+  --color-brand: #4b2934;
+  --color-action: #0d9488;
+  --color-action-hover: #0f766e;
+  --color-select: #ecf3ff;
+  --color-select-ink: #2458c4;
+  --color-info: #978ae7;
+  --color-warning: #ee6011;
+  --color-warning-ink: #b4460c;
+  --color-danger: #ca2d2f;
+  --color-soft: #f4e7de;
+}
