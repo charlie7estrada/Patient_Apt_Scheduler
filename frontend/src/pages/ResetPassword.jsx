@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import AuthLayout from '../components/auth/AuthLayout'
+import WakeUpNote from '../components/auth/WakeUpNote'
+import Alert from '../components/ui/Alert'
+import Button from '../components/ui/Button'
+import TextField from '../components/ui/TextField'
+
+const ICON_PATH = 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'
 
 function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -50,94 +57,47 @@ function ResetPassword() {
   function renderBody() {
     if (!token || linkRejected) {
       return (
-        <p className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-3 py-2">
+        <Alert>
           This reset link is invalid or has expired.{' '}
           <Link to="/forgot-password" className="font-medium underline">Request a new link</Link>
-        </p>
+        </Alert>
       )
     }
 
     if (done) {
       return (
-        <p className="bg-teal-50 border border-teal-200 text-teal-700 text-sm rounded-lg px-3 py-2">
+        <Alert tone="success">
           Your password has been updated.{' '}
           <Link to="/login" className="font-medium underline">Sign in</Link>
-        </p>
+        </Alert>
       )
     }
 
     return (
       <>
-        {error && (
-          <p className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-3 py-2 mb-4">
-            {error}
-          </p>
-        )}
+        {error && <Alert className="mb-4">{error}</Alert>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">New password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Confirm new password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-teal-600 text-white font-medium py-2.5 rounded-lg shadow-sm hover:bg-teal-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading && (
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-            )}
+          <TextField label="New password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+          <TextField label="Confirm new password" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+          <Button type="submit" loading={loading} className="w-full">
             {loading ? 'Updating password…' : 'Update password'}
-          </button>
-          {loading && (
-            <p className="text-xs text-slate-400 mt-3 text-center">
-              This can take up to a minute if the server is waking up from idle.
-            </p>
-          )}
+          </Button>
+          {loading && <WakeUpNote />}
         </form>
       </>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-sky-50 flex items-center justify-center p-4">
-      <div className="bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-slate-100 w-full max-w-md">
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center mb-4">
-            <svg className="w-6 h-6 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-semibold text-slate-800">Choose a new password</h1>
-          <p className="text-sm text-slate-500 mt-1 text-center">Reset links expire 30 minutes after they're requested</p>
-        </div>
-
-        {renderBody()}
-
-        <p className="text-sm text-slate-500 mt-6 text-center">
-          <Link to="/login" className="text-teal-600 hover:text-teal-700 font-medium">Back to sign in</Link>
-        </p>
-      </div>
-    </div>
+    <AuthLayout
+      iconPath={ICON_PATH}
+      title="Choose a new password"
+      subtitle="Reset links expire 30 minutes after they're requested"
+      footer={<Link to="/login" className="font-medium text-action hover:text-action-hover">Back to sign in</Link>}
+    >
+      {renderBody()}
+    </AuthLayout>
   )
 }
 

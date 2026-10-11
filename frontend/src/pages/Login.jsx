@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import AuthLayout from '../components/auth/AuthLayout'
+import WakeUpNote from '../components/auth/WakeUpNote'
+import Alert from '../components/ui/Alert'
+import Button from '../components/ui/Button'
+import TextField from '../components/ui/TextField'
+
+const ICON_PATH = 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -63,100 +70,48 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-sky-50 flex items-center justify-center p-4">
-      <div className="bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-slate-100 w-full max-w-md">
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center mb-4">
-            <svg className="w-6 h-6 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-semibold text-slate-800">Welcome back</h1>
-          <p className="text-sm text-slate-500 mt-1">Sign in to manage your appointments</p>
-        </div>
-
-        {error && (
-          <p className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-3 py-2 mb-4">
-            {error}
-          </p>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
-              required
-            />
-          <div className="text-right mt-1">
-              <Link to="/forgot-password" className="text-sm text-teal-600 hover:text-teal-700 font-medium">Forgot password?</Link>
-          </div>
-          </div>
-          <button
-            type="submit"
-            disabled={loading || guestLoading}
-            className="w-full bg-teal-600 text-white font-medium py-2.5 rounded-lg shadow-sm hover:bg-teal-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading && (
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-            )}
-            {loading ? 'Signing in…' : 'Sign In'}
-          </button>
-          {loading && (
-            <p className="text-xs text-slate-400 mt-3 text-center">
-              This can take up to a minute if the server is waking up from idle.
-            </p>
-          )}
-        </form>
-
-        <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-slate-200" />
-          <span className="text-xs text-slate-400 uppercase tracking-wide">or</span>
-          <div className="flex-1 h-px bg-slate-200" />
-        </div>
-
-        <button
-          type="button"
-          onClick={handleGuestLogin}
-          disabled={loading || guestLoading}
-          className="w-full border border-teal-600 text-teal-700 font-medium py-2.5 rounded-lg hover:bg-teal-50 transition disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          {guestLoading && (
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-            </svg>
-          )}
-          {guestLoading ? 'Starting demo…' : 'Try the demo'}
-        </button>
-        <p className="text-xs text-slate-400 mt-2 text-center">
-          {guestLoading
-            ? 'This can take up to a minute if the server is waking up from idle.'
-            : 'No account needed. Demo data is deleted after 24 hours.'}
-        </p>
-
-        <p className="text-sm text-slate-500 mt-6 text-center">
+    <AuthLayout
+      iconPath={ICON_PATH}
+      title="Welcome back"
+      subtitle="Sign in to manage your appointments"
+      footer={
+        <>
           Don't have an account?{' '}
-          <Link to="/register" className="text-teal-600 hover:text-teal-700 font-medium">Register</Link>
-        </p>
+          <Link to="/register" className="font-medium text-action hover:text-action-hover">Register</Link>
+        </>
+      }
+    >
+      {error && <Alert className="mb-4">{error}</Alert>}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <TextField label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+        <div>
+          <TextField label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+          <div className="mt-1 text-right">
+            <Link to="/forgot-password" className="text-sm font-medium text-action hover:text-action-hover">Forgot password?</Link>
+          </div>
+        </div>
+        <Button type="submit" loading={loading} disabled={guestLoading} className="w-full">
+          {loading ? 'Signing in…' : 'Sign In'}
+        </Button>
+        {loading && <WakeUpNote />}
+      </form>
+
+      <div className="my-6 flex items-center gap-3">
+        <div className="h-px flex-1 bg-line" />
+        <span className="text-xs uppercase tracking-wide text-ink-muted">or</span>
+        <div className="h-px flex-1 bg-line" />
       </div>
-    </div>
+
+      <Button variant="secondary" onClick={handleGuestLogin} loading={guestLoading} disabled={loading} className="w-full">
+        {guestLoading ? 'Starting demo…' : 'Try the demo'}
+      </Button>
+      {guestLoading ? (
+        <WakeUpNote />
+      ) : (
+        <p className="mt-2 text-center text-xs text-ink-muted">No account needed. Demo data is deleted after 24 hours.</p>
+      )}
+    </AuthLayout>
   )
 }
 
