@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { isGuestSession } from '../lib/auth'
 import { useAppointments } from '../hooks/useAppointments'
 import { useChat } from '../hooks/useChat'
+import { useCurrentUser } from '../hooks/useCurrentUser'
+import AppShell from '../components/app/AppShell'
+import NavColumn from '../components/app/NavColumn'
 
 const statusStyles = {
   pending: 'bg-amber-100 text-amber-700',
@@ -26,7 +29,9 @@ function sortAppointments(appointments) {
 
 function Dashboard() {
   const [isGuest] = useState(isGuestSession)
+  const [appointmentsVisible, setAppointmentsVisible] = useState(true)
   const navigate = useNavigate()
+  const { fullName } = useCurrentUser()
   const { appointments, showArchived, toggleArchived, archive, refresh } = useAppointments()
   const { messages, input, setInput, loading, send } = useChat({
     greeting: isGuest ? GUEST_GREETING : GREETING,
@@ -48,86 +53,74 @@ function Dashboard() {
     send()
   }
 
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white border-b border-slate-100 shadow-sm px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center">
-            <svg className="w-5 h-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <h1 className="text-lg font-semibold text-slate-800">Patient Appointment Scheduler</h1>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="text-sm text-slate-500 hover:text-red-600 transition"
-        >
-          {isGuest ? 'Exit demo' : 'Logout'}
-        </button>
-      </header>
-
-      {isGuest && (
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 text-sm text-amber-800 text-center">
-          You're using a demo account. Anything you book is deleted after 24 hours.{' '}
-          <button onClick={handleCreateAccount} className="font-medium underline hover:text-amber-900">
-            Create a free account
-          </button>
-        </div>
-      )}
-
-      <main className="flex-1 max-w-5xl w-full mx-auto p-6 flex gap-6">
-        <aside className="w-72 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-100 p-5 h-fit">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Your Appointments</h2>
-          {appointments.length === 0 ? (
-            <p className="text-sm text-slate-400 italic">No appointments booked yet.</p>
-          ) : (
-            <ul className="space-y-3">
-              {sortAppointments(appointments).map(a => (
-                <li 
-                  key={a.id} 
-                  className={`relative border border-slate-100 bg-slate-50/50 rounded-xl p-3 ${
-                    PAST_STATUSES.includes(a.status) ? 'opacity-60' : ''
-                  }`}
-                >
-                  {PAST_STATUSES.includes(a.status) && !a.is_archived && (
-                    <button
-                      onClick={() => archive(a.id)}
-                      aria-label="Archive appointment"
-                      title="Archive"
-                      className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-slate-300 hover:text-slate-600 transition"
-                    >
-                      &times;
-                    </button>
-                  )}
-                  <p className="text-sm font-medium text-slate-800">
-                    {new Date(a.scheduled_at).toLocaleString([], { 
-                      dateStyle: 'medium', 
-                      timeStyle: 'short', 
-                      timeZone: 'America/Chicago',
-                      })} CT
-                  </p>
-                  <p className="text-xs text-slate-500 mt-0.5">{a.reason}</p>
-                  <p className="text-xs text-slate-500">with {a.provider_name}</p>
-                  <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full capitalize ${statusStyles[a.status] ?? 'bg-slate-100 text-slate-600'}`}>
-                    {a.status}
-                  </span>
-                  {a.is_archived && (
-                    <span className="inline-block mt-2 ml-1.5 text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">
-                      archived
+    return (
+    <AppShell
+      isGuest={isGuest}
+      onCreateAccount={handleCreateAccount}
+      nav={
+        <NavColumn
+          fullName={fullName}
+          isGuest={isGuest}
+          appointmentsVisible={appointmentsVisible}
+          onToggleAppointments={() => setAppointmentsVisible(v => !v)}
+          onLogout={handleLogout}
+        />
+      }
+    >
+      <main className="mx-auto flex w-full max-w-5xl gap-6 p-6">
+        {appointmentsVisible && (
+          <aside className="w-72 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-100 p-5 h-fit">
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Your Appointments</h2>
+            {appointments.length === 0 ? (
+              <p className="text-sm text-slate-400 italic">No appointments booked yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {sortAppointments(appointments).map(a => (
+                  <li 
+                    key={a.id} 
+                    className={`relative border border-slate-100 bg-slate-50/50 rounded-xl p-3 ${
+                      PAST_STATUSES.includes(a.status) ? 'opacity-60' : ''
+                    }`}
+                  >
+                    {PAST_STATUSES.includes(a.status) && !a.is_archived && (
+                      <button
+                        onClick={() => archive(a.id)}
+                        aria-label="Archive appointment"
+                        title="Archive"
+                        className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-slate-300 hover:text-slate-600 transition"
+                      >
+                        &times;
+                      </button>
+                    )}
+                    <p className="text-sm font-medium text-slate-800">
+                      {new Date(a.scheduled_at).toLocaleString([], { 
+                        dateStyle: 'medium', 
+                        timeStyle: 'short', 
+                        timeZone: 'America/Chicago',
+                        })} CT
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">{a.reason}</p>
+                    <p className="text-xs text-slate-500">with {a.provider_name}</p>
+                    <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full capitalize ${statusStyles[a.status] ?? 'bg-slate-100 text-slate-600'}`}>
+                      {a.status}
                     </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          <button
-            onClick={toggleArchived}
-            className="mt-4 text-xs text-slate-400 hover:text-slate-600 transition"
-          >
-            {showArchived ? 'Hide archived' : 'Show archived'}
-          </button>
-        </aside>
+                    {a.is_archived && (
+                      <span className="inline-block mt-2 ml-1.5 text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">
+                        archived
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button
+              onClick={toggleArchived}
+              className="mt-4 text-xs text-slate-400 hover:text-slate-600 transition"
+            >
+              {showArchived ? 'Hide archived' : 'Show archived'}
+            </button>
+          </aside>
+        )}
 
         <div className="flex-1 flex flex-col">
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4 overflow-y-auto space-y-4">
@@ -169,7 +162,7 @@ function Dashboard() {
           </form>
         </div>
       </main>
-    </div>
+    </AppShell>
   )
 }
 
