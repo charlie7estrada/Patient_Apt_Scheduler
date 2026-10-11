@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch } from '../lib/api'
 import { isGuestSession } from '../lib/auth'
+import { useAppointments } from '../hooks/useAppointments'
+import { useChat } from '../hooks/useChat'
 
 const statusStyles = {
   pending: 'bg-amber-100 text-amber-700',
@@ -25,41 +26,12 @@ function sortAppointments(appointments) {
 
 function Dashboard() {
   const [isGuest] = useState(isGuestSession)
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: isGuest ? GUEST_GREETING : GREETING }
-  ])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-
-  const [appointments, setAppointments] = useState([])
-  const [showArchived, setShowArchived] = useState(false)
-
-  async function fetchAppointments() {
-    try {
-      const response = await apiFetch(`/api/v1/appointments/?include_archived=${showArchived}`)
-      if (!response || !response.ok) return
-      const data = await response.json().catch(() => null)
-      if (Array.isArray(data)) setAppointments(data)
-    } catch {
-    // keep whatever list is already on screen; chat surfaces its own errors
-    }
-  }
-
-  async function handleArchive(id) {
-    try {
-      const response = await apiFetch(`/api/v1/appointments/${id}/archive`, { method: 'POST' })
-      if (!response || !response.ok) return
-      fetchAppointments()
-    } catch {
-    // leave the list alone; the next refresh reconciles it
-    }
-  }
-
-  useEffect(() => {
-    fetchAppointments()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showArchived])
+  const { appointments, showArchived, toggleArchived, archive, refresh } = useAppointments()
+  const { messages, input, setInput, loading, send } = useChat({
+    greeting: isGuest ? GUEST_GREETING : GREETING,
+    onReply: refresh,
+  })
 
   function handleLogout() {
     localStorage.removeItem('token')
@@ -71,51 +43,9 @@ function Dashboard() {
     navigate('/register')
   }
 
-  async function handleSend(e) {
+  function handleSend(e) {
     e.preventDefault()
-    if (!input.trim()) return
-
-    const userMessage = { role: 'user', content: input }
-    const updatedMessages = [...messages, userMessage]
-    setMessages(updatedMessages)
-    setInput('')
-    setLoading(true)
-
-    const history = updatedMessages
-      .slice(0, -1)
-      .filter(m => !m.isError)
-      .map(m => ({ role: m.role, content: m.content
-    }))
-
-    try {
-      const response = await apiFetch('/api/v1/chat/', {
-        method: 'POST',
-        body: JSON.stringify({ text: input, history })
-    })
-
-    if (response) {
-      const data = await response.json().catch(()=> ({}))
-    
-      if (response.ok) {
-        setMessages([...updatedMessages, { role: 'assistant', content: data.response }])
-        fetchAppointments()
-      } else {
-        setMessages([...updatedMessages, {
-          role: 'assistant',
-          isError: true,
-          content: data.detail || 'Something went wrong. Please try again.'
-        }])
-      }
-    }
-    } catch {
-      setMessages([...updatedMessages, {
-        role: 'assistant',
-        isError: true,
-        content: 'Could not reach the server. Please check your connection and try again.'
-      }])
-    }
-
-    setLoading(false)
+    send()
   }
 
   return (
@@ -162,7 +92,7 @@ function Dashboard() {
                 >
                   {PAST_STATUSES.includes(a.status) && !a.is_archived && (
                     <button
-                      onClick={() => handleArchive(a.id)}
+                      onClick={() => archive(a.id)}
                       aria-label="Archive appointment"
                       title="Archive"
                       className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-slate-300 hover:text-slate-600 transition"
@@ -192,7 +122,7 @@ function Dashboard() {
             </ul>
           )}
           <button
-            onClick={() => setShowArchived(v => !v)}
+            onClick={toggleArchived}
             className="mt-4 text-xs text-slate-400 hover:text-slate-600 transition"
           >
             {showArchived ? 'Hide archived' : 'Show archived'}
