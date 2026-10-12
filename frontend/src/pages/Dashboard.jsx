@@ -7,6 +7,7 @@ import { useCurrentUser } from '../hooks/useCurrentUser'
 import AppShell from '../components/app/AppShell'
 import NavColumn from '../components/app/NavColumn'
 import AppointmentsPanel from '../components/app/AppointmentsPanel'
+import ChatPanel from '../components/app/ChatPanel'
 
 const GREETING = 'Hi! I can help you book an appointment. What brings you in today?'
 const GUEST_GREETING = 'Hi! This demo account already has two sample appointments. Try booking a new one, or ask me to reschedule or cancel one of them.'
@@ -34,10 +35,6 @@ function Dashboard() {
     navigate('/register')
   }
 
-  function handleSend(e) {
-    e.preventDefault()
-    send()
-  }
 
     return (
     <AppShell
@@ -62,48 +59,14 @@ function Dashboard() {
             onArchive={archive}
           />
         )}
-        <main className="flex min-w-0 flex-1 flex-col p-6">
-
-
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4 overflow-y-auto space-y-4">
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-sm px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'bg-teal-600 text-white'
-                    : msg.isError
-                    ? 'bg-red-50 border border-red-200 text-red-700'
-                    : 'bg-slate-100 text-slate-700'
-                }`}>
-                  {msg.content}
-                </div>
-              </div>
-            ))}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="bg-slate-100 text-slate-500 px-4 py-2.5 rounded-2xl text-sm animate-pulse">Typing...</div>
-              </div>
-            )}
-          </div>
-
-          <form onSubmit={handleSend} className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 border border-slate-200 rounded-lg px-3.5 py-2.5 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-teal-600 text-white font-medium px-5 py-2.5 rounded-lg shadow-sm hover:bg-teal-700 transition disabled:opacity-50"
-            >
-              Send
-            </button>
-          </form>
-        </div>
+                <main className="flex min-w-0 flex-1 flex-col p-4 md:p-6">
+          <ChatPanel
+            messages={messages}
+            loading={loading}
+            input={input}
+            onInputChange={setInput}
+            onSend={send}
+          />
       </main>
     </div>
     </AppShell>
