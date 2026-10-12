@@ -8,6 +8,7 @@ import AppShell from '../components/app/AppShell'
 import NavColumn from '../components/app/NavColumn'
 import AppointmentsPanel from '../components/app/AppointmentsPanel'
 import ChatPanel from '../components/app/ChatPanel'
+import SwipeColumns from '../components/app/SwipeColumns'
 
 const GREETING = 'Hi! I can help you book an appointment. What brings you in today?'
 const GUEST_GREETING = 'Hi! This demo account already has two sample appointments. Try booking a new one, or ask me to reschedule or cancel one of them.'
@@ -50,25 +51,37 @@ function Dashboard() {
         />
       }
     >
-      <div className="flex h-full">
-        {appointmentsVisible && (
-          <AppointmentsPanel
-            appointments={appointments}
-            showArchived={showArchived}
-            onToggleArchived={toggleArchived}
-            onArchive={archive}
-          />
-        )}
-                <main className="flex min-w-0 flex-1 flex-col p-4 md:p-6">
-          <ChatPanel
-            messages={messages}
-            loading={loading}
-            input={input}
-            onInputChange={setInput}
-            onSend={send}
-          />
-      </main>
-    </div>
+      <SwipeColumns
+        columns={[
+          appointmentsVisible && {
+            key: 'appointments',
+            label: 'Appointments',
+            content: (
+              <AppointmentsPanel
+                appointments={appointments}
+                showArchived={showArchived}
+                onToggleArchived={toggleArchived}
+                onArchive={archive}
+              />
+            ),
+          },
+          {
+            key: 'chat',
+            label: 'Chat',
+            content: (
+              <main className="flex min-w-0 flex-1 flex-col p-4 md:p-6">
+                <ChatPanel
+                  messages={messages}
+                  loading={loading}
+                  input={input}
+                  onInputChange={setInput}
+                  onSend={send}
+                />
+              </main>
+            ),
+          },
+        ].filter(Boolean)}
+      />
     </AppShell>
   )
 }

@@ -26,7 +26,7 @@ function AppointmentsPanel({ appointments, showArchived, onToggleArchived, onArc
   const { upcoming, past } = splitAppointments(appointments)
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-r border-line bg-surface">
+    <aside className="flex w-full shrink-0 flex-col border-r border-line bg-surface md:w-72">
       <h2 className="px-4 pt-4 text-sm font-semibold text-ink">Your appointments</h2>
 
       <div className="flex-1 space-y-6 overflow-y-auto p-4">
